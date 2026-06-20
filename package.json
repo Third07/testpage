@@ -1,0 +1,10 @@
+{
+  "name": "metusv2-website",
+  "version": "2.0.0",
+  "description": "Facebook Page Manager website for MetusV2 extension",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "type": "module"
+}

@@ -1,0 +1,22 @@
+[build]
+  # Netlify serves the static files from the website/ directory
+  publish = "website"
+  # No build command needed — this is a plain static site
+  command = "echo 'Static site ready'"
+
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  # Route /api/video-info → /.netlify/functions/video-info
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[headers]]
+  # Allow the extension (and anyone) to call the site cross-origin
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS, HEAD"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
