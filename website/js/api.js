@@ -201,23 +201,20 @@ const API = (function () {
   }
   // Simple multipart photo upload (for local files) — routed through extension bridge
   async function uploadPhoto(pageId, file, message = '', pageAccessToken = '') {
-    let fileBuffer;
-    try {
-    } catch (readErr) {
-      let fileBuffer;
+  let fileBuffer;
 
-try {
-  fileBuffer = await file.arrayBuffer();
-} catch (readErr) {
-  throw new Error(
-    'Failed to read photo file: ' +
-    readErr.message
-  );
-}
-      throw new Error('Failed to read photo file: ' + readErr.message);
-    }
-    const token = pageAccessToken || getPageToken(pageId);
-    return new Promise((resolve, reject) => {
+  try {
+    fileBuffer = await file.arrayBuffer();
+  } catch (readErr) {
+    throw new Error(
+      'Failed to read photo file: ' +
+      readErr.message
+    );
+  }
+
+  const token = pageAccessToken || getPageToken(pageId);
+
+  return new Promise((resolve, reject) => {
       window.dispatchEvent(new CustomEvent(
         'metus_page_to_content',
         {
