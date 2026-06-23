@@ -1,11 +1,6 @@
 /**
  * app.js — Main application router and initializer
- *
- * Handles:
- * - Extension connection + token retrieval on startup
- * - Sidebar navigation and feature routing
- * - Global page list cache shared across all features
- * - Queue badge updater
+ * Simplified for bulk video posting with affiliate focus
  */
 
 const App = (function () {
@@ -21,31 +16,19 @@ const App = (function () {
   let currentFeature = null;
 
   const features = {
-    dashboard: () => Dashboard.render(contentEl, pagesCache),
-    clonePost: () => ClonePost.render(contentEl, pagesCache),
-    videoPost: () => VideoPost.render(contentEl, pagesCache),
-    imagePost: () => ImagePost.render(contentEl, pagesCache),
-    textPost: () => TextPost.render(contentEl, pagesCache),
-    tiktokPipe: () => TiktokPipe.render(contentEl, pagesCache),
+    dashboard: () => BulkVideoManager.render(contentEl, pagesCache),
     scheduled: () => Scheduled.render(contentEl, pagesCache),
   };
 
   const featureTitles = {
-    dashboard: 'Pages Dashboard',
-    clonePost: 'Clone Post',
-    videoPost: 'Multi Video Post',
-    imagePost: 'Bulk Image Post',
-    textPost: 'Text & Link Post',
-    tiktokPipe: 'TikTok → Facebook',
+    dashboard: 'Bulk Video Manager',
     scheduled: 'Scheduled Queue',
   };
 
   function init() {
-    // Subscribe to extension events
     Bridge.on('connected', onConnected);
     Bridge.on('error', onError);
 
-    // Nav clicks
     navLinks.forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
@@ -55,14 +38,11 @@ const App = (function () {
       });
     });
 
-    // Hash routing
     window.addEventListener('hashchange', () => routeFromHash());
 
-    // Persist queue badge
     setInterval(updateQueueBadge, 30000);
     updateQueueBadge();
 
-    // Kick off extension login
     UI.setStatus(false, 'Connecting to extension…');
     attemptLogin();
   }
@@ -82,7 +62,6 @@ const App = (function () {
     UI.setStatus(true, 'Extension connected');
     UI.toast('Connected to extension!', 'success');
 
-    // Load user profile and pages
     try {
       userProfile = await API.get('/me', { fields: 'id,name,picture' });
       if (userProfile) {
@@ -123,7 +102,6 @@ const App = (function () {
     if (!features[featureKey]) return;
     currentFeature = featureKey;
 
-    // Update nav active state
     navLinks.forEach(link => {
       link.classList.toggle('active', link.dataset.feature === featureKey);
     });
@@ -152,7 +130,6 @@ const App = (function () {
     }
   }
 
-  // Expose limited globals for modules
   window.App = { navigate, getPages, refreshPages, updateQueueBadge };
   document.addEventListener('DOMContentLoaded', init);
   return { navigate, getPages, refreshPages, updateQueueBadge };
