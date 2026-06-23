@@ -32,18 +32,7 @@ const API = (function () {
 
   async function get(path, params = {}) {
   return new Promise((resolve, reject) => {
-    window.dispatchEvent(new CustomEvent(
-      'metus_page_to_content',
-      {
-        detail: {
-          event: 'graph',
-          data: {
-            path,
-            params
-          }
-        }
-      }
-    ));
+    
 
     function listener(e) {
       const d = e.detail;
@@ -203,7 +192,6 @@ const API = (function () {
   async function uploadPhoto(pageId, file, message = '', pageAccessToken = '') {
     let fileBuffer;
     try {
-      fileBuffer = await file.arrayBuffer();
     } catch (readErr) {
       throw new Error('Failed to read photo file: ' + readErr.message);
     }
