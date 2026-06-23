@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FB Manager — Facebook Page Manager</title>
+  <title>FB Bulk Video Manager — Affiliate Video Posting</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -11,32 +11,12 @@
     <aside class="sidebar">
       <div class="brand">
         <img src="/icon.png" alt="FB Manager" class="brand__icon" onerror="this.style.display='none'">
-        <h1 class="brand__title">FB Manager</h1>
+        <h1 class="brand__title">Video Manager</h1>
       </div>
       <nav class="nav" id="main-nav">
         <a href="#dashboard" class="nav__link active" data-feature="dashboard">
-          <span class="nav__icon">🏠</span>
-          <span class="nav__label">Pages Dashboard</span>
-        </a>
-        <a href="#clone-post" class="nav__link" data-feature="clonePost">
-          <span class="nav__icon">📋</span>
-          <span class="nav__label">Clone Post</span>
-        </a>
-        <a href="#video-post" class="nav__link" data-feature="videoPost">
           <span class="nav__icon">🎬</span>
-          <span class="nav__label">Multi Video Post</span>
-        </a>
-        <a href="#image-post" class="nav__link" data-feature="imagePost">
-          <span class="nav__icon">🖼️</span>
-          <span class="nav__label">Bulk Image Post</span>
-        </a>
-        <a href="#text-post" class="nav__link" data-feature="textPost">
-          <span class="nav__icon">📝</span>
-          <span class="nav__label">Text &amp; Link Post</span>
-        </a>
-        <a href="#tiktok-pipe" class="nav__link" data-feature="tiktokPipe">
-          <span class="nav__icon">🔄</span>
-          <span class="nav__label">TikTok → Facebook</span>
+          <span class="nav__label">Bulk Videos</span>
         </a>
         <a href="#scheduled" class="nav__link" data-feature="scheduled">
           <span class="nav__icon">⏰</span>
@@ -52,7 +32,7 @@
 
     <main class="main">
       <header class="topbar">
-        <h2 id="page-title">Pages Dashboard</h2>
+        <h2 id="page-title">Bulk Video Manager</h2>
         <div class="topbar__user" id="user-info" style="display:none">
           <img id="user-avatar" src="" alt="">
           <span id="user-name"></span>
@@ -70,11 +50,6 @@
   <script src="/js/api.js"></script>
   <!-- Feature modules -->
   <script src="/js/features/dashboard.js"></script>
-  <script src="/js/features/clonePost.js"></script>
-  <script src="/js/features/videoPost.js"></script>
-  <script src="/js/features/imagePost.js"></script>
-  <script src="/js/features/textPost.js"></script>
-  <script src="/js/features/tiktokPipe.js"></script>
   <script src="/js/features/scheduled.js"></script>
   <!-- Router / app shell -->
   <script src="/js/app.js"></script>
