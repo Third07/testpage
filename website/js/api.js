@@ -143,6 +143,11 @@ const API = (function () {
     let fileBuffer;
     try {
       fileBuffer = await file.arrayBuffer();
+      console.log("FILE INFO");
+console.log("Name:", file.name);
+console.log("File size:", file.size);
+console.log("Buffer size:", fileBuffer.byteLength);
+console.log("Type:", file.type);
     } catch (readErr) {
       throw new Error('Failed to read video file: ' + readErr.message);
     }
