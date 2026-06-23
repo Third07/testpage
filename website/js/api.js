@@ -139,45 +139,66 @@ const API = (function () {
   }
 
   // Simple multipart video upload (for local files) — routed through extension bridge
-  async function uploadVideo(pageId, file, description = '', title = '', pageAccessToken = '') {
-    let fileBuffer;
-    try {
-      fileBuffer = await file.arrayBuffer();
-      console.log("FILE INFO");
-console.log("Name:", file.name);
-console.log("File size:", file.size);
-console.log("Buffer size:", fileBuffer.byteLength);
-console.log("Type:", file.type);
-    } catch (readErr) {
-      throw new Error('Failed to read video file: ' + readErr.message);
-    }
-    const token = pageAccessToken || getPageToken(pageId);
-    return new Promise((resolve, reject) => {
-      window.dispatchEvent(new CustomEvent(
-        'metus_page_to_content',
-        {
-          detail: {
-            event: 'uploadVideo',
-            data: { pageId, fileBuffer, fileName: file.name, fileType: file.type, description, title, pageAccessToken: token }
-          }
-        }
-      ));
+  async function uploadVideo(
+  pageId,
+  file,
+  description = '',
+  title = '',
+  pageAccessToken = ''
+) {
 
-      function listener(e) {
-        const d = e.detail;
-        if (d.event !== 'uploadVideo') return;
-        window.removeEventListener('metus_content_to_page', listener);
-        if (d.data?.error) {
-          const errText = typeof d.data.error === 'string' ? d.data.error : (d.data.error.message || JSON.stringify(d.data.error));
-          reject(new Error(errText));
-        } else {
-          resolve(d.data);
-        }
-      }
-      window.addEventListener('metus_content_to_page', listener);
-    });
+  const token = pageAccessToken || getPageToken(pageId);
+
+  if (!token) {
+    throw new Error('No Page Access Token found');
   }
 
+  console.log('DIRECT FACEBOOK VIDEO UPLOAD');
+  console.log('Page ID:', pageId);
+  console.log('File:', file.name);
+  console.log('Size:', file.size);
+
+  const form = new FormData();
+
+  form.append('source', file);
+
+  if (description) {
+    form.append('description', description);
+  }
+
+  if (title) {
+    form.append('title', title);
+  }
+
+  const response = await fetch(
+    `https://graph-video.facebook.com/v18.0/${pageId}/videos?access_token=${encodeURIComponent(token)}`,
+    {
+      method: 'POST',
+      body: form
+    }
+  );
+
+  const text = await response.text();
+
+  console.log('FACEBOOK RESPONSE:', text);
+
+  let data;
+
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(text);
+  }
+
+  if (data.error) {
+    throw new Error(
+      data.error.message ||
+      JSON.stringify(data.error)
+    );
+  }
+
+  return data;
+  }
   // Simple multipart photo upload (for local files) — routed through extension bridge
   async function uploadPhoto(pageId, file, message = '', pageAccessToken = '') {
     let fileBuffer;
