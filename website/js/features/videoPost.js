@@ -12,8 +12,7 @@ container.appendChild(selector.el);
 
 const card = document.createElement('div');
 card.className = 'card';
-
-card.innerHTML = 
+card.innerHTML = `
   <div class="card__title">Video URL Publisher</div>
 
   <div class="form-group">
