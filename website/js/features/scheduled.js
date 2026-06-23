@@ -1,6 +1,6 @@
 /**
- * scheduled.js — Feature 6: Scheduled Queued Posting
- *
+ * scheduled.js — Scheduled Video Queue
+ * 
  * Queue stored in localStorage as `fbmanager_queue`.
  * A polling loop checks every 30 seconds for due items and publishes them.
  */
@@ -32,17 +32,17 @@ const Scheduled = (function () {
     const header = document.createElement('div');
     header.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <h3 style="font-weight:600">Scheduled Queue</h3>
+        <h3 style="font-weight:600">Scheduled Videos</h3>
         <div>
-          <button class="btn btn--danger btn--small" id="queue-clear-all">Clear All</button>
-          <button class="btn btn--secondary btn--small" id="queue-run-now" style="margin-left:8px">▶ Run Now</button>
+          <button class="btn btn--danger btn--small" id="queue-clear-all">🗑️ Clear All</button>
+          <button class="btn btn--secondary btn--small" id="queue-run-now" style="margin-left:8px">▶️ Run Now</button>
         </div>
       </div>
     `;
     container.appendChild(header);
 
     header.querySelector('#queue-clear-all').addEventListener('click', () => {
-      if (!confirm('Clear all queued items?')) return;
+      if (!confirm('Clear all queued videos?')) return;
       items = []; save(); renderList(); if (typeof App !== 'undefined') App.updateQueueBadge();
     });
     header.querySelector('#queue-run-now').addEventListener('click', () => {
@@ -60,21 +60,19 @@ const Scheduled = (function () {
         listWrap.innerHTML = `
           <div class="empty-state">
             <div class="empty-state__icon">⏰</div>
-            <div class="empty-state__title">No scheduled posts</div>
-            <div class="empty-state__desc">Use any posting feature and check "Schedule for later" to add items here.</div>
+            <div class="empty-state__title">No scheduled videos</div>
+            <div class="empty-state__desc">Videos will appear here when you schedule them using the auto-schedule or manual scheduling options.</div>
           </div>
         `;
         return;
       }
       listWrap.innerHTML = '';
-      // Sort by time ascending
       const sorted = [...items].sort((a, b) => (a.scheduledAt || 0) - (b.scheduledAt || 0));
       sorted.forEach(item => {
         const due = (item.scheduledAt || 0) <= Date.now();
         const timeStr = item.scheduledAt ? new Date(item.scheduledAt).toLocaleString() : 'Unknown';
-        const typeLabel = { text: 'Text Post', clone: 'Clone Post', image: 'Image Post', video: 'Video Post', tiktok: 'TikTok → FB' }[item.type] || item.type;
         const targetNames = (item.targetIds || []).map(id => {
-          const p = pages.find(x => x.id === id);
+          const p = pages.find(x => x.id === id || String(x.id) === id);
           return p ? p.name : id;
         }).join(', ');
         const el = document.createElement('div');
@@ -83,11 +81,11 @@ const Scheduled = (function () {
         el.innerHTML = `
           <div class="queue-item__time">${timeStr}</div>
           <div class="queue-item__body">
-            <div class="queue-item__type">${typeLabel} · ${item.status}</div>
-            <div class="queue-item__text">${UI.esc(item.message || item.caption || '(no text)').substring(0,120)}${(item.message||item.caption||'').length>120?'…':''}</div>
+            <div class="queue-item__type">Video · ${item.status}</div>
+            <div class="queue-item__text">${UI.esc(item.caption || '(no caption)').substring(0, 120)}${(item.caption || '').length > 120 ? '…' : ''}</div>
             <div style="font-size:0.75rem;color:#8a8d91;margin-top:4px">To: ${UI.esc(targetNames)}</div>
           </div>
-          <div class="actions">
+          <div style="display:flex;gap:8px;">
             <button class="btn btn--small btn--outline queue-remove" data-id="${item.id}">Remove</button>
             <button class="btn btn--small btn--primary queue-run" data-id="${item.id}">Run</button>
           </div>
@@ -99,7 +97,7 @@ const Scheduled = (function () {
         btn.addEventListener('click', () => { removeQueue(btn.dataset.id); renderList(); });
       });
       listWrap.querySelectorAll('.queue-run').forEach(btn => {
-        btn.addEventListener('click', () => processSingle(btn.dataset.id));
+        btn.addEventListener('click', () => processSingle(btn.dataset.id, renderList));
       });
     }
   }
@@ -115,71 +113,35 @@ const Scheduled = (function () {
     App.updateQueueBadge();
   }
 
-  async function processSingle(id) {
+  async function processSingle(id, callback) {
     load();
     const item = items.find(i => i.id === id);
     if (!item) return;
     item.status = 'running'; save(); if (typeof App !== 'undefined') App.updateQueueBadge();
 
     try {
-      switch (item.type) {
-        case 'text': {
-          await API.publishToMultiplePages(item.targetIds, pid => API.publishText(pid, item.message, item.link || ''));
-          break;
+      if (item.type === 'video') {
+        if (item.videoUrl) {
+          await API.publishToMultiplePages(item.targetIds, pid =>
+            API.publishVideoByUrl(pid, item.videoUrl, item.caption + (item.link ? '\n\n' + item.link : ''), '')
+          );
+        } else {
+          throw new Error('Scheduled video requires a URL.');
         }
-        case 'clone': {
-          const post = item.post;
-          const att = post?.attachments?.data?.[0];
-          const mediaType = att?.media_type || (post?.source ? 'video' : (post?.full_picture ? 'photo' : 'text'));
-          if (mediaType === 'video' && post?.source) {
-            await API.publishToMultiplePages(item.targetIds, pid => API.publishVideoByUrl(pid, post.source, item.message, ''));
-          } else if (mediaType === 'photo' || post?.full_picture) {
-            await API.publishToMultiplePages(item.targetIds, pid => API.publishPhoto(pid, post.full_picture || att?.url || '', item.message));
-          } else {
-            await API.publishToMultiplePages(item.targetIds, pid => API.publishText(pid, item.message, att?.url || ''));
-          }
-          break;
-        }
-        case 'image': {
-          // Can't reliably reschedule local file uploads from localStorage without the File objects.
-          // Mark as skipped and notify.
-          throw new Error('Scheduled image uploads from local files are not supported (file data lost). Re-upload manually or use image URLs.');
-        }
-        case 'video': {
-          if (item.videoUrl) {
-            await API.publishToMultiplePages(item.targetIds, pid => API.publishVideoByUrl(pid, item.videoUrl, item.caption, ''));
-          } else {
-            throw new Error('Scheduled video requires a URL.');
-          }
-          break;
-        }
-        case 'tiktok': {
-          if (item.videoUrl) {
-            await API.publishToMultiplePages(item.targetIds, pid => API.publishVideoByUrl(pid, item.videoUrl, item.caption, ''));
-          } else {
-            throw new Error('Scheduled TikTok requires a video URL.');
-          }
-          break;
-        }
-        default:
-          throw new Error('Unknown queue type: ' + item.type);
+      } else {
+        throw new Error('Unknown queue type: ' + item.type);
       }
       item.status = 'done';
-      UI.toast('Scheduled item published successfully', 'success');
+      UI.toast('Video posted successfully', 'success');
     } catch (err) {
       const msg = (err && err.message) ? err.message : String(err);
       item.status = 'failed';
       item.error = msg;
-      UI.toast('Scheduled item failed: ' + msg, 'error');
+      UI.toast('Video posting failed: ' + msg, 'error');
     }
     save();
     if (typeof App !== 'undefined') App.updateQueueBadge();
-    // Re-render if currently on the Scheduled tab
-    if (typeof App !== 'undefined' && document.querySelector('.nav__link[data-feature="scheduled"]')?.classList.contains('active')) {
-      const c = document.getElementById('content');
-      const pages = (typeof App !== 'undefined') ? App.getPages() : [];
-      if (c && typeof Scheduled !== 'undefined') Scheduled.render(c, pages);
-    }
+    if (callback) callback();
   }
 
   // Global polling loop
